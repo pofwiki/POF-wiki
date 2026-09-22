@@ -487,6 +487,10 @@ html,body{height:auto;min-height:100%;width:100%}.app{display:block;height:auto;
 
 .detail .star-upgrade-intro{margin:0 0 12px;font-size:13px;line-height:1.65;font-weight:600;color:#456033}
 .detail .star-upgrade-hint:has(+.star-upgrade-intro){margin-bottom:5px}
+
+.season-spotlight.season-rebel{background-image:linear-gradient(135deg,#102e48,#175c6b 55%,#25816e);background-color:#153e53}
+
+.season-rebel .season-variant-list{grid-template-columns:repeat(2,minmax(0,1fr))}
 </style>
 <link rel="icon" type="image/png" href="assets/0ee9520168fda31e0f1d987fda1e74a79bdc56a6e61a3a70103bf1cd1094fe7d.png">
 </head>
@@ -838,9 +842,11 @@ function seasonRemainingDays(){
  const value=t=>Number(parts.find(p=>p.type===t).value);
  return Math.max(0,Math.round((Date.UTC(2026,8,28)-Date.UTC(value('year'),value('month')-1,value('day')))/86400000));
 }
+function isRebelSeason(now=Date.now()){return now>=Date.parse('2026-09-29T00:00:00+08:00');}
 function renderSeasonSpotlight(){
- const newcomers=['107100','108000'].map(id=>companions.find(c=>c.id===id));
- return `<section class="season-spotlight"><header class="season-heading"><div><span class="season-eyebrow">SEASON 9 · 本赛季新内容</span><h2>疯王赛季</h2></div><div class="season-clock"><strong>${seasonRemainingDays()>0?'剩余 '+seasonRemainingDays()+' 天':'已到结束日期'}</strong><span>2026.8.27 — 2026.9.28</span></div></header><p class="season-current">当前赛季：Season 9 - 疯王赛季</p><div class="season-content"><section><h3>本赛季新随从</h3><div class="season-minions">${newcomers.map(c=>`<button type="button" class="season-minion" data-season-minion="${c.id}"><span class="season-new">NEW</span><img src="${c.image}" alt="${c.name}"><strong>${c.name}</strong><span class="season-minion-tags">${c.tags.join(' · ')}</span><span class="season-cta">查看技能与卡牌 →</span></button>`).join('')}</div></section><section class="season-variants"><h3>本赛季新变体</h3><div class="season-variant-list">${[{id:'101900',label:'变体1'},{id:'100100',label:'变体3'},{id:'105600',label:'变体2'}].map(item=>{const c=companions.find(c=>c.id===item.id);const index=c.cardForms.findIndex(f=>f.label===item.label);const f=c.cardForms[index];return `<button type="button" class="season-variant" data-season-variant="${c.id}" data-season-form="${index}"><img src="${f.cardArt||f.image||c.image}" alt=""><span><strong>${c.name}</strong><small>${f.label} · ${f.mode}</small></span><b aria-hidden="true">→</b></button>`;}).join('')}</div></section></div></section>`;
+ const rebel=isRebelSeason();
+ const newcomers=(rebel?['103200','108200']:['107100','108000']).map(id=>companions.find(c=>c.id===id));
+ return `<section class="season-spotlight ${rebel?'season-rebel':''}"><header class="season-heading"><div><span class="season-eyebrow">${rebel?'SEASON 10':'SEASON 9'} · 本赛季新内容</span><h2>${rebel?'Rebel of the Seas':'疯王赛季'}</h2></div><div class="season-clock"><strong>${rebel?'赛季进行中':seasonRemainingDays()>0?'剩余 '+seasonRemainingDays()+' 天':'已到结束日期'}</strong><span>${rebel?'2026.9.29 开启':'2026.8.27 — 2026.9.28'}</span></div></header><p class="season-current">当前赛季：${rebel?'Season 10 - Rebel of the Seas':'Season 9 - 疯王赛季'}</p><div class="season-content"><section><h3>本赛季新随从</h3><div class="season-minions">${newcomers.map(c=>`<button type="button" class="season-minion" data-season-minion="${c.id}"><span class="season-new">NEW</span><img src="${c.image}" alt="${c.name}"><strong>${c.name}</strong><span class="season-minion-tags">${c.tags.join(' · ')}</span><span class="season-cta">查看技能与卡牌 →</span></button>`).join('')}</div></section><section class="season-variants"><h3>本赛季新变体</h3><div class="season-variant-list">${(rebel?[{id:'105400',label:'变体1'},{id:'106000',label:'变体1'},{id:'106600',label:'变体1'},{id:'106100',label:'变体1'}]:[{id:'101900',label:'变体1'},{id:'100100',label:'变体3'},{id:'105600',label:'变体2'}]).map(item=>{const c=companions.find(c=>c.id===item.id);const index=c.cardForms.findIndex(f=>f.label===item.label&&f.mode==='基础卡牌');const f=c.cardForms[index];return `<button type="button" class="season-variant" data-season-variant="${c.id}" data-season-form="${index}"><img src="${f.cardArt||f.image||c.image}" alt=""><span><strong>${c.name}</strong><small>${f.label} · ${f.mode}</small></span><b aria-hidden="true">→</b></button>`;}).join('')}</div></section></div></section>`;
 }
 
 
@@ -1106,6 +1112,11 @@ function render(){
 }
 if(location.hash==='#news'){state.tab='news';document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab==='news'));}
 render();
+
+let lastSeasonIsRebel=isRebelSeason();
+function refreshSeasonBoundary(){const next=isRebelSeason();if(next!==lastSeasonIsRebel){lastSeasonIsRebel=next;if(state.tab==='home')renderHome();}}
+setInterval(refreshSeasonBoundary,30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshSeasonBoundary();});
 </script>
 </body>
 </html>
